@@ -6,10 +6,10 @@ Usage:
     python main.py index <markdown_directory> [--db <db_path>]
 
     # Ask a single question
-    python main.py ask "<question>" [--db <db_path>]
+    python main.py ask "<question>" [--db <db_path>] [--no-expand] [--expansions N]
 
     # Interactive chat mode
-    python main.py chat [--db <db_path>]
+    python main.py chat [--db <db_path>] [--no-expand] [--expansions N]
 """
 
 import argparse
@@ -42,7 +42,13 @@ def cmd_ask(args: argparse.Namespace) -> None:
     from query import answer_question
 
     print(f"\n質問: {args.question}\n")
-    answer, sources = answer_question(args.question, args.db, top_k=args.top_k)
+    answer, sources = answer_question(
+        args.question,
+        args.db,
+        top_k=args.top_k,
+        expand=not args.no_expand,
+        n_expansions=args.expansions,
+    )
 
     print("=== 回答 ===")
     print(answer)
@@ -75,7 +81,13 @@ def cmd_chat(args: argparse.Namespace) -> None:
             break
 
         print()
-        answer, sources = answer_question(question, args.db, top_k=args.top_k)
+        answer, sources = answer_question(
+            question,
+            args.db,
+            top_k=args.top_k,
+            expand=not args.no_expand,
+            n_expansions=args.expansions,
+        )
 
         print("=== 回答 ===")
         print(answer)
@@ -104,10 +116,14 @@ def main() -> None:
     ask_parser = subparsers.add_parser("ask", help="Ask a single question")
     ask_parser.add_argument("question", help="Question text")
     ask_parser.add_argument("--top-k", type=int, default=5, help="Number of top results to retrieve (default: 5)")
+    ask_parser.add_argument("--no-expand", action="store_true", help="Disable multi-query expansion")
+    ask_parser.add_argument("--expansions", type=int, default=3, help="Number of expanded queries to generate (default: 3)")
 
     # chat subcommand
     chat_parser = subparsers.add_parser("chat", help="Start interactive chat mode")
     chat_parser.add_argument("--top-k", type=int, default=5, help="Number of top results to retrieve (default: 5)")
+    chat_parser.add_argument("--no-expand", action="store_true", help="Disable multi-query expansion")
+    chat_parser.add_argument("--expansions", type=int, default=3, help="Number of expanded queries to generate (default: 3)")
 
     args = parser.parse_args()
 
