@@ -1,0 +1,2 @@
+[console_scripts]
+markdown-rag = main:main

@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: markdown-rag-poc
+Version: 0.1.0
+Summary: Markdown RAG PoC using ChromaDB, OpenAI Embeddings, and Claude
+Requires-Python: >=3.11
+Requires-Dist: chromadb>=0.5.0
+Requires-Dist: openai>=1.0.0
+Requires-Dist: anthropic>=0.30.0
