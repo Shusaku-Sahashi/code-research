@@ -9,9 +9,15 @@ dependencies = [
     "anthropic>=0.30.0",
 ]
 
+[project.scripts]
+markdown-rag = "main:main"
+
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main", "indexer", "query"]
 
 [tool.uv]
 dev-dependencies = []
