@@ -8,7 +8,7 @@ import anthropic
 import chromadb
 from openai import OpenAI
 
-from indexer import COLLECTION_NAME, EMBED_MODEL
+from indexer import COLLECTION_NAME, EMBED_MODEL, get_chroma_client
 
 TOP_K = 5  # Number of top results to retrieve
 LLM_MODEL = "claude-haiku-4-5-20251001"
@@ -63,7 +63,7 @@ def answer_question(
     """
     openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    chroma_client = chromadb.PersistentClient(path=db_path)
+    chroma_client = get_chroma_client(db_path)
 
     collection = chroma_client.get_collection(name=COLLECTION_NAME)
 

@@ -1,0 +1,17 @@
+[project]
+name = "markdown-rag-poc"
+version = "0.1.0"
+description = "Markdown RAG PoC using ChromaDB, OpenAI Embeddings, and Claude"
+requires-python = ">=3.11"
+dependencies = [
+    "chromadb>=0.5.0",
+    "openai>=1.0.0",
+    "anthropic>=0.30.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = []

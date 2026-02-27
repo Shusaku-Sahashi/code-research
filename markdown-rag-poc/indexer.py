@@ -16,6 +16,22 @@ EMBED_MODEL = "text-embedding-3-small"
 EMBED_BATCH_SIZE = 100  # Max number of texts per OpenAI API call
 
 
+def get_chroma_client(db_path: str = "./chroma_db") -> chromadb.ClientAPI:
+    """
+    Return a ChromaDB client.
+
+    - If CHROMA_HOST is set, connect to a remote ChromaDB server via HttpClient
+      (use with `docker compose up`).
+    - Otherwise, use a local PersistentClient stored at db_path.
+    """
+    host = os.environ.get("CHROMA_HOST")
+    if host:
+        port = int(os.environ.get("CHROMA_PORT", "8000"))
+        print(f"[chroma] Connecting to ChromaDB server at {host}:{port}")
+        return chromadb.HttpClient(host=host, port=port)
+    return chromadb.PersistentClient(path=db_path)
+
+
 def find_markdown_files(directory: str) -> list[Path]:
     """Recursively collect all .md files under the given directory."""
     root = Path(directory)
@@ -75,7 +91,7 @@ def build_index(directory: str, db_path: str = "./chroma_db") -> None:
     embed them, and store in ChromaDB.
     """
     openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    chroma_client = chromadb.PersistentClient(path=db_path)
+    chroma_client = get_chroma_client(db_path)
 
     # Drop existing collection to allow clean re-indexing
     existing = [c.name for c in chroma_client.list_collections()]
