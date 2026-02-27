@@ -1,14 +1,14 @@
 """
-main.py - Markdown RAG PoC の CLIエントリーポイント
+main.py - CLI entrypoint for the Markdown RAG PoC.
 
-使い方:
-    # インデックス作成
+Usage:
+    # Build index
     python main.py index <markdown_directory> [--db <db_path>]
 
-    # 質問（一回）
+    # Ask a single question
     python main.py ask "<question>" [--db <db_path>]
 
-    # 対話モード
+    # Interactive chat mode
     python main.py chat [--db <db_path>]
 """
 
@@ -18,7 +18,7 @@ import sys
 
 
 def check_env() -> bool:
-    """必要な環境変数が設定されているか確認する"""
+    """Check that required API key environment variables are set."""
     missing = []
     if not os.environ.get("OPENAI_API_KEY"):
         missing.append("OPENAI_API_KEY")
@@ -31,14 +31,14 @@ def check_env() -> bool:
 
 
 def cmd_index(args: argparse.Namespace) -> None:
-    """インデックス作成コマンド"""
+    """Run the index build command."""
     from indexer import build_index
 
     build_index(args.directory, args.db)
 
 
 def cmd_ask(args: argparse.Namespace) -> None:
-    """一回質問コマンド"""
+    """Run a single question and print the answer."""
     from query import answer_question
 
     print(f"\n質問: {args.question}\n")
@@ -55,7 +55,7 @@ def cmd_ask(args: argparse.Namespace) -> None:
 
 
 def cmd_chat(args: argparse.Namespace) -> None:
-    """対話モード"""
+    """Run interactive chat mode."""
     from query import answer_question
 
     print("=== Markdown RAG チャットモード ===")
@@ -90,24 +90,24 @@ def cmd_chat(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Markdown RAG PoC - MarkdownファイルをRAGで検索・回答"
+        description="Markdown RAG PoC - Search Markdown files and answer questions"
     )
-    parser.add_argument("--db", default="./chroma_db", help="ChromaDB の保存パス (default: ./chroma_db)")
+    parser.add_argument("--db", default="./chroma_db", help="ChromaDB storage path (default: ./chroma_db)")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # index コマンド
-    index_parser = subparsers.add_parser("index", help="Markdownファイルをインデックス化する")
-    index_parser.add_argument("directory", help="対象の Markdown ディレクトリパス")
+    # index subcommand
+    index_parser = subparsers.add_parser("index", help="Index Markdown files into ChromaDB")
+    index_parser.add_argument("directory", help="Path to the Markdown directory")
 
-    # ask コマンド
-    ask_parser = subparsers.add_parser("ask", help="一回だけ質問する")
-    ask_parser.add_argument("question", help="質問文")
-    ask_parser.add_argument("--top-k", type=int, default=5, help="検索結果の上位件数 (default: 5)")
+    # ask subcommand
+    ask_parser = subparsers.add_parser("ask", help="Ask a single question")
+    ask_parser.add_argument("question", help="Question text")
+    ask_parser.add_argument("--top-k", type=int, default=5, help="Number of top results to retrieve (default: 5)")
 
-    # chat コマンド
-    chat_parser = subparsers.add_parser("chat", help="対話モードで質問する")
-    chat_parser.add_argument("--top-k", type=int, default=5, help="検索結果の上位件数 (default: 5)")
+    # chat subcommand
+    chat_parser = subparsers.add_parser("chat", help="Start interactive chat mode")
+    chat_parser.add_argument("--top-k", type=int, default=5, help="Number of top results to retrieve (default: 5)")
 
     args = parser.parse_args()
 

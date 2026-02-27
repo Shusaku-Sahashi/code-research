@@ -1,5 +1,5 @@
 """
-query.py - ChromaDB を検索して LLM (claude-haiku-4-5) で回答を生成する
+query.py - Search ChromaDB and generate answers using claude-haiku-4-5.
 """
 
 import os
@@ -10,7 +10,7 @@ from openai import OpenAI
 
 from indexer import COLLECTION_NAME, EMBED_MODEL
 
-TOP_K = 5  # 検索で取得する上位件数
+TOP_K = 5  # Number of top results to retrieve
 LLM_MODEL = "claude-haiku-4-5-20251001"
 
 SYSTEM_PROMPT = """あなたはMarkdownドキュメントのQAアシスタントです。
@@ -24,7 +24,7 @@ SYSTEM_PROMPT = """あなたはMarkdownドキュメントのQAアシスタント
 
 
 def build_context(results: dict) -> tuple[str, list[str]]:
-    """ChromaDB の検索結果からコンテキスト文字列とソースファイル一覧を生成する"""
+    """Build a context string and deduplicated source list from ChromaDB query results."""
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
     distances = results["distances"][0]
@@ -36,13 +36,11 @@ def build_context(results: dict) -> tuple[str, list[str]]:
         source = meta.get("source", "unknown")
         heading = meta.get("heading", "")
 
-        # ソース表示用（重複排除）
         source_label = f"{source}" + (f" > {heading}" if heading else "")
         if source_label not in sources:
             sources.append(source_label)
 
-        # コンテキスト構築
-        header = f"[出典 {i+1}: {source_label} (類似度スコア: {1 - dist:.3f})]"
+        header = f"[Source {i+1}: {source_label} (similarity: {1 - dist:.3f})]"
         context_parts.append(f"{header}\n{doc}")
 
     context = "\n\n---\n\n".join(context_parts)
@@ -55,13 +53,13 @@ def answer_question(
     top_k: int = TOP_K,
 ) -> tuple[str, list[str]]:
     """
-    質問に対して:
-    1. 質問をEmbeddingに変換
-    2. ChromaDBで類似チャンクを検索
-    3. LLMで回答を生成
+    Answer a question using RAG:
+    1. Embed the question
+    2. Search ChromaDB for similar chunks
+    3. Generate an answer with the LLM
 
     Returns:
-        (回答テキスト, ソースファイルのリスト)
+        (answer text, list of source file labels)
     """
     openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
@@ -69,11 +67,11 @@ def answer_question(
 
     collection = chroma_client.get_collection(name=COLLECTION_NAME)
 
-    # 質問をEmbeddingに変換
+    # Embed the question
     embed_response = openai_client.embeddings.create(model=EMBED_MODEL, input=[question])
     query_embedding = embed_response.data[0].embedding
 
-    # ChromaDB で類似チャンクを検索
+    # Search ChromaDB for similar chunks
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=min(top_k, collection.count()),
@@ -85,7 +83,6 @@ def answer_question(
 
     context, sources = build_context(results)
 
-    # LLM に回答を生成させる
     user_message = f"""以下のコンテキストを参考に、質問に回答してください。
 
 ## コンテキスト

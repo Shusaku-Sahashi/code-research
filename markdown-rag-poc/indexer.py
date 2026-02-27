@@ -1,5 +1,5 @@
 """
-indexer.py - Markdownファイルを読み込み、チャンク分割してChromaDBに保存する
+indexer.py - Load Markdown files, split into chunks, and store in ChromaDB.
 """
 
 import os
@@ -11,13 +11,13 @@ import chromadb
 from openai import OpenAI
 
 COLLECTION_NAME = "markdown_docs"
-CHUNK_SIZE = 500  # 見出しがない場合のフォールバックサイズ（文字数）
+CHUNK_SIZE = 500  # Fallback chunk size in characters when no headings are found
 EMBED_MODEL = "text-embedding-3-small"
-EMBED_BATCH_SIZE = 100  # OpenAI API への1回あたりの最大テキスト数
+EMBED_BATCH_SIZE = 100  # Max number of texts per OpenAI API call
 
 
 def find_markdown_files(directory: str) -> list[Path]:
-    """指定ディレクトリ以下の .md ファイルを再帰的に収集する"""
+    """Recursively collect all .md files under the given directory."""
     root = Path(directory)
     if not root.exists():
         raise ValueError(f"Directory not found: {directory}")
@@ -27,10 +27,10 @@ def find_markdown_files(directory: str) -> list[Path]:
 
 def split_by_headings(text: str) -> list[str]:
     """
-    見出し（# ～ ######）単位でテキストを分割する。
-    見出しがない場合は CHUNK_SIZE 文字で分割する。
+    Split text by Markdown headings (# through ######).
+    Falls back to CHUNK_SIZE character splits when no headings are present.
     """
-    # 行頭の見出しで分割（見出し自体をチャンク先頭に含める）
+    # Split at line-leading headings, keeping the heading at the start of each chunk
     parts = re.split(r"(?=\n#{1,6} )", text)
 
     chunks = []
@@ -39,11 +39,11 @@ def split_by_headings(text: str) -> list[str]:
         if not part:
             continue
 
-        # 見出しを含むチャンクはそのまま追加
         if re.match(r"#{1,6} ", part):
+            # Chunk starts with a heading — keep as-is
             chunks.append(part)
         else:
-            # 見出しなし → CHUNK_SIZE 文字ごとに分割
+            # No heading — split by CHUNK_SIZE characters
             for i in range(0, len(part), CHUNK_SIZE):
                 chunk = part[i : i + CHUNK_SIZE].strip()
                 if chunk:
@@ -53,13 +53,13 @@ def split_by_headings(text: str) -> list[str]:
 
 
 def extract_heading(chunk: str) -> str:
-    """チャンク先頭の見出しテキストを抽出する（なければ空文字）"""
+    """Extract the heading text from the first line of a chunk (empty string if none)."""
     match = re.match(r"#{1,6} (.+)", chunk)
     return match.group(1).strip() if match else ""
 
 
 def embed_texts(client: OpenAI, texts: list[str]) -> list[list[float]]:
-    """テキストのリストをEmbeddingに変換する（バッチ処理）"""
+    """Convert a list of texts to embeddings using batched API calls."""
     all_embeddings = []
     for i in range(0, len(texts), EMBED_BATCH_SIZE):
         batch = texts[i : i + EMBED_BATCH_SIZE]
@@ -71,13 +71,13 @@ def embed_texts(client: OpenAI, texts: list[str]) -> list[list[float]]:
 
 def build_index(directory: str, db_path: str = "./chroma_db") -> None:
     """
-    指定ディレクトリの Markdown ファイルを読み込み、
-    チャンク分割 → Embedding → ChromaDB に保存する。
+    Load Markdown files from the given directory, split into chunks,
+    embed them, and store in ChromaDB.
     """
     openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     chroma_client = chromadb.PersistentClient(path=db_path)
 
-    # 既存コレクションがあれば削除して再作成（再インデックス）
+    # Drop existing collection to allow clean re-indexing
     existing = [c.name for c in chroma_client.list_collections()]
     if COLLECTION_NAME in existing:
         chroma_client.delete_collection(COLLECTION_NAME)
