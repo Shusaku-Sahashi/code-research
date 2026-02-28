@@ -3,13 +3,13 @@ main.py - CLI entrypoint for the Markdown RAG PoC.
 
 Usage:
     # Build index
-    python main.py index <markdown_directory> [--db <db_path>]
+    uv run markdown-rag index <markdown_directory> [--db <db_path>]
 
     # Ask a single question
-    python main.py ask "<question>" [--db <db_path>] [--no-expand] [--expansions N]
+    uv run markdown-rag ask "<question>" [--db <db_path>] [--no-expand] [--expansions N]
 
     # Interactive chat mode
-    python main.py chat [--db <db_path>] [--no-expand] [--expansions N]
+    uv run markdown-rag chat [--db <db_path>] [--no-expand] [--expansions N]
 """
 
 import argparse

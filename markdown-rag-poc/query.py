@@ -9,7 +9,6 @@ before passing to the LLM.
 import os
 
 import anthropic
-import chromadb
 from openai import OpenAI
 
 from indexer import COLLECTION_NAME, EMBED_MODEL, get_chroma_client

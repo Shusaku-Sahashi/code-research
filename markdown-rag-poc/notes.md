@@ -20,12 +20,12 @@ MarkdownファイルをRAG（Retrieval-Augmented Generation）で検索・回答
 ```
 markdown-rag-poc/
 ├── notes.md           # このファイル
-├── READ.md            # 最終レポート
+├── README.md          # 最終レポート
 ├── pyproject.toml     # uv プロジェクト定義（依存関係管理）
 ├── docker-compose.yml # ChromaDB サーバー（オプション）
 ├── .env.example       # 環境変数サンプル
 ├── indexer.py         # MD読み込み → チャンク分割 → Embedding → ChromaDB保存
-├── query.py           # 質問 → ChromaDB検索 → LLM回答生成
+├── query.py           # 質問 → クエリ拡張 → ChromaDB検索 → LLM回答生成
 └── main.py            # CLIエントリーポイント
 ```
 
@@ -38,7 +38,7 @@ markdown-rag-poc/
 - `collection.query()` でベクトル近傍検索
 
 ### チャンク分割ロジック
-- `re.split(r'\n(?=#{1,6} )', text)` で見出し単位に分割
+- `re.split(r"(?=\n#{1,6} )", text)` で見出し単位に分割
 - 分割結果が空または短すぎる場合はスキップ
 - メタデータにファイルパスと見出しタイトルを保存
 
