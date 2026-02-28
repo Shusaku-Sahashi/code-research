@@ -13,9 +13,9 @@ LangChainを使わずシンプルな直接API呼び出しで構築し、ChromaDB
 markdown-rag-poc/
 ├── README.md         # このレポート
 ├── notes.md          # 実装メモ
-├── requirements.txt  # 依存パッケージ
+├── pyproject.toml    # 依存パッケージ（uv管理）
 ├── indexer.py        # インデックス作成（MD読込 → チャンク → Embedding → ChromaDB）
-├── query.py          # 検索・回答（質問 → ChromaDB検索 → LLM回答生成）
+├── query.py          # 検索・回答（質問 → クエリ拡張 → ChromaDB検索 → LLM回答生成）
 └── main.py           # CLIエントリーポイント（index/ask/chatサブコマンド）
 ```
 
@@ -36,9 +36,13 @@ markdown-rag-poc/
 
 ```
 [ユーザー質問]
-       ↓ OpenAI text-embedding-3-small でEmbedding
-[質問ベクトル]
-       ↓ ChromaDB cosine類似度検索（top-k件）
+       ↓ claude-haiku-4-5 でN個の言い換えに拡張（Multi-Query Expansion）
+[元の質問 + 拡張クエリ × N]
+       ↓ OpenAI text-embedding-3-small で一括Embedding
+[クエリベクトル群]
+       ↓ ChromaDB cosine類似度検索（各クエリ top-k件）
+[検索結果群]
+       ↓ IDで重複排除・最良スコアで統合（merge_results）
 [関連チャンク + ソースファイル名]
        ↓ claude-haiku-4-5 にコンテキスト + 質問を渡す
 [回答テキスト + ソースファイル一覧]
@@ -85,7 +89,7 @@ re.split(r"(?=\n#{1,6} )", text)
 ### 前提条件
 
 ```bash
-pip install -r requirements.txt
+uv sync
 export OPENAI_API_KEY="sk-..."
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
@@ -93,7 +97,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 ### インデックス作成
 
 ```bash
-python main.py index /path/to/markdown/docs
+uv run markdown-rag index /path/to/markdown/docs
 # オプション: --db ./my_chroma_db  (デフォルト: ./chroma_db)
 ```
 
@@ -111,7 +115,8 @@ python main.py index /path/to/markdown/docs
 ### 一回質問 (ask)
 
 ```bash
-python main.py ask "インストール方法を教えてください"
+uv run markdown-rag ask "インストール方法を教えてください"
+# オプション: --no-expand（クエリ拡張を無効化）, --expansions N（拡張数、デフォルト: 3）
 ```
 
 出力例:
@@ -133,7 +138,7 @@ pip install <package>
 ### 対話モード (chat)
 
 ```bash
-python main.py chat
+uv run markdown-rag chat
 ```
 
 ```
