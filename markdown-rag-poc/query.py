@@ -1,5 +1,5 @@
 """
-query.py - Search ChromaDB and generate answers using claude-haiku-4-5.
+query.py - Search ChromaDB and generate answers using gpt-4o-mini.
 
 Supports multi-query expansion: the original question is rewritten into
 N alternative phrasings, each searched independently, and results are merged
@@ -8,14 +8,13 @@ before passing to the LLM.
 
 import os
 
-import anthropic
 from openai import OpenAI
 
 from indexer import COLLECTION_NAME, EMBED_MODEL, get_chroma_client
 
 TOP_K = 5          # Number of top results to retrieve
 N_EXPANSIONS = 3   # Number of alternative queries to generate
-LLM_MODEL = "claude-haiku-4-5-20251001"
+LLM_MODEL = "gpt-4o-mini"
 
 SYSTEM_PROMPT = """あなたはMarkdownドキュメントのQAアシスタントです。
 提供されたコンテキスト（Markdownの抜粋）に基づいて、ユーザーの質問に日本語で回答してください。
@@ -37,19 +36,19 @@ Question: {question}"""
 
 def expand_query(
     question: str,
-    client: anthropic.Anthropic,
+    client: OpenAI,
     n: int = N_EXPANSIONS,
 ) -> list[str]:
     """
     Use an LLM to generate N alternative phrasings of the question.
     Returns a list starting with the original question followed by expansions.
     """
-    message = client.messages.create(
+    message = client.chat.completions.create(
         model=LLM_MODEL,
         max_tokens=256,
         messages=[{"role": "user", "content": EXPANSION_PROMPT.format(n=n, question=question)}],
     )
-    lines = [line.strip() for line in message.content[0].text.strip().splitlines()]
+    lines = [line.strip() for line in message.choices[0].message.content.strip().splitlines()]
     expansions = [line for line in lines if line and line != question]
     queries = [question] + expansions[:n]
     print(f"[query] Expanded into {len(queries)} queries:")
@@ -135,7 +134,6 @@ def answer_question(
         (answer text, list of source file labels)
     """
     openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     chroma_client = get_chroma_client(db_path)
 
     collection = chroma_client.get_collection(name=COLLECTION_NAME)
@@ -143,7 +141,7 @@ def answer_question(
 
     # Build the list of queries to run
     if expand:
-        queries = expand_query(question, anthropic_client, n=n_expansions)
+        queries = expand_query(question, openai_client, n=n_expansions)
     else:
         queries = [question]
 
@@ -179,14 +177,16 @@ def answer_question(
 
 {question}"""
 
-    message = anthropic_client.messages.create(
+    message = openai_client.chat.completions.create(
         model=LLM_MODEL,
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_message},
+        ],
     )
 
-    answer = message.content[0].text
+    answer = message.choices[0].message.content
     return answer, sources
 
 

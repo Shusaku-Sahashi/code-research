@@ -19,13 +19,8 @@ import sys
 
 def check_env() -> bool:
     """Check that required API key environment variables are set."""
-    missing = []
     if not os.environ.get("OPENAI_API_KEY"):
-        missing.append("OPENAI_API_KEY")
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        missing.append("ANTHROPIC_API_KEY")
-    if missing:
-        print(f"[ERROR] 環境変数が設定されていません: {', '.join(missing)}")
+        print("[ERROR] 環境変数が設定されていません: OPENAI_API_KEY")
         return False
     return True
 
