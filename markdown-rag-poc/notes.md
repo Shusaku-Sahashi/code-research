@@ -22,7 +22,6 @@ markdown-rag-poc/
 ├── notes.md           # このファイル
 ├── README.md          # 最終レポート
 ├── pyproject.toml     # uv プロジェクト定義（依存関係管理）
-├── docker-compose.yml # ChromaDB サーバー（オプション）
 ├── .env.example       # 環境変数サンプル
 ├── indexer.py         # MD読み込み → チャンク分割 → Embedding → ChromaDB保存
 ├── query.py           # 質問 → クエリ拡張 → ChromaDB検索 → LLM回答生成
@@ -61,10 +60,7 @@ markdown-rag-poc/
 - 見出しをチャンクの先頭に含めることで文脈を維持
 - ChromaDBのIDは文字列で一意である必要がある → `{filepath}_{chunk_index}` 形式を採用
 - uv に移行: `requirements.txt` → `pyproject.toml`。`uv sync` で環境構築、`uv run python main.py ...` で実行
-- ChromaDB は 2 モードに対応:
-  - **ローカル埋め込みモード** (デフォルト): `PersistentClient` で `./chroma_db` に保存。Docker 不要
-  - **サーバーモード**: `docker compose up` で起動し、`CHROMA_HOST=localhost` を設定すると `HttpClient` を使用
-- `get_chroma_client()` ヘルパーを `indexer.py` に定義し、`CHROMA_HOST` 環境変数でモードを切り替え
+- `get_chroma_client()` ヘルパーを `indexer.py` に定義。`PersistentClient` で `./chroma_db` にローカル保存
 - **クエリ拡張 (Multi-Query Expansion)**: 元の質問をLLMでN個の言い換えに展開し、それぞれでベクトル検索してマージすることでリコール率向上
   - `expand_query()`: Haiku で代替クエリを生成
   - `merge_results()`: 複数クエリの結果をIDで重複排除し、最良スコアを保持
