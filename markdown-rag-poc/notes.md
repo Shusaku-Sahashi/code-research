@@ -22,7 +22,6 @@ markdown-rag-poc/
 ├── notes.md           # このファイル
 ├── README.md          # 最終レポート
 ├── pyproject.toml     # uv プロジェクト定義（依存関係管理）
-├── .env.example       # 環境変数サンプル
 ├── indexer.py         # MD読み込み → チャンク分割 → Embedding → ChromaDB保存
 ├── query.py           # 質問 → クエリ拡張 → ChromaDB検索 → LLM回答生成
 └── main.py            # CLIエントリーポイント
