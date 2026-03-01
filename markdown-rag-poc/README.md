@@ -91,7 +91,6 @@ re.split(r"(?=\n#{1,6} )", text)
 ```bash
 uv sync
 export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
 ### インデックス作成
